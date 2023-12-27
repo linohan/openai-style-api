@@ -1,4 +1,7 @@
-[
+import os
+# api_key建议写入环境变量（参考zhipu-api），通过代码读取，不要直接写在代码里。
+
+MODEL_CONFIGS = [
     {
         "token": "f2b7295fc440db7f",
         "type": "azure",
@@ -45,10 +48,8 @@
         "token": "7c7aa4a3549f5",
         "type": "zhipu-api",
         "config": {
-            "api_key": "xxxxxx",
-            "model": "chatglm_lite",
-            "temperature": 0.8,
-            "top_p": 0.7
+            "api_key": os.environ.get("ZhipuAI_Key"),
+            "model": "chatglm_lite"
         }
     },
     {

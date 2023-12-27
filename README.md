@@ -31,8 +31,8 @@
 
 ## 快速开始
 
-1. `git clone https://github.com/tian-minghui/openai-style-api.git` 拉取项目代码
-2. `cp model-config.template model-config.json`  并按需修改配置文件model-config.json
+1. `git clone git@github.com:linohan/openai-style-api.git` 拉取项目代码
+2. `cp configs/model_config.py.template configs/model_config.py`  并按需修改配置文件model_config.py
  
         {
           "token": "f2b7295fc440db7f",
@@ -45,7 +45,7 @@
               "temperature": 0.8
           }
         }
-
+api_key建议写入环境变量（参考zhipu-api），通过代码读取，不要直接写在代码里。
 4. 本地化部署直接 `pip install -r  requirements.txt` 后，运行 `python open-api.py`,  docker部署在目录下执行 `docker compose up -d`
 5. 有了api-base: localhost:8090 和 api-key:f2b7295fc440db7f 可以使用了，下边列举了几种使用方式
 
