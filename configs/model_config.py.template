@@ -49,7 +49,7 @@ MODEL_CONFIGS = [
         "type": "zhipu-api",
         "config": {
             "api_key": os.environ.get("ZhipuAI_Key"),
-            "model": "chatglm_lite"
+            "model": "chatglm_turbo"
         }
     },
     {
