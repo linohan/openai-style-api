@@ -26,8 +26,8 @@
 - [x] 支持在线更新配置 `http://0.0.0.0:8090/`（这个前端页面和交互完全是用gpt写的 哈哈）
 - [x] 支持负载均衡，一个key可轮训/随机/并行等访问多个模型
 - [x] 支持按照model_name进行路由
-- [x] 支持智谱ai通过openai completion接口调用
-- [ ] 支持其他大模型通过openai completion接口调用
+- [x] 支持智谱ai通过openai completions接口调用
+- [ ] 支持其他大模型通过openai completions接口调用
 - [ ] 错误和异常处理优化，对齐openai errorcode
 
 
