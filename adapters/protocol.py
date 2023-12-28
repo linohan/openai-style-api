@@ -52,6 +52,22 @@ class ChatCompletionResponseStreamChoice(BaseModel):
     finish_reason: Optional[Literal["stop", "length"]]
 
 
+class CompletionRequest(BaseModel):
+    model: Optional[str] = "gpt-3.5-turbo"
+    prompt: Union[str, List[str]]
+    temperature: Optional[float] = None  # between 0 and 2    Defaults to 1
+    top_p: Optional[float] = None  # Defaults to 1
+    max_tokens: Optional[int] = None
+    stream: Optional[bool] = False
+    stop: Optional[List[str]] = None
+
+
+class CompletionResponseChoice(BaseModel):
+    index: int
+    text: str
+    finish_reason: Literal["stop", "length", "function_call"]
+
+
 class Usage(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
@@ -64,6 +80,17 @@ class ChatCompletionResponse(BaseModel):
     object: Literal["chat.completion", "chat.completion.chunk"]
     choices: List[
         Union[ChatCompletionResponseChoice, ChatCompletionResponseStreamChoice]
+    ]
+    created: Optional[int] = Field(default_factory=lambda: int(time.time()))
+    usage: Optional[Usage] = None
+
+
+class CompletionResponse(BaseModel):
+    id: str = f"chatcmpl-{str(time.time())}"
+    model: str
+    object: Literal["text_completion"]
+    choices: List[
+        CompletionResponseChoice
     ]
     created: Optional[int] = Field(default_factory=lambda: int(time.time()))
     usage: Optional[Usage] = None

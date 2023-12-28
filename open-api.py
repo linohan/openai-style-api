@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.routing import APIRouter
 from pydantic import BaseModel
 from adapters.base import ModelAdapter
-from adapters.protocol import ChatCompletionRequest, ChatCompletionResponse
+from adapters.protocol import ChatCompletionRequest, ChatCompletionResponse, CompletionRequest
 from typing import Iterator, List, Optional
 from adapters.adapter_factory import get_adapter
 from loguru import logger
@@ -104,6 +104,19 @@ def create_chat_completion(
 ):
     logger.info(f"request: {request},  model: {model}")
     resp = model.chat_completions(request)
+    if request.stream:
+        return StreamingResponse(convert(resp), media_type="text/event-stream")
+    else:
+        openai_response = next(resp)
+        return JSONResponse(content=openai_response.model_dump(exclude_none=True))
+    
+
+@router.post("/v1/completions")
+def create_completion(
+    request: CompletionRequest, model: ModelAdapter = Depends(check_api_key)
+):
+    logger.info(f"request: {request},  model: {model}")
+    resp = model.completions(request)
     if request.stream:
         return StreamingResponse(convert(resp), media_type="text/event-stream")
     else:

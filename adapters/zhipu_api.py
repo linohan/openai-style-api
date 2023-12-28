@@ -2,7 +2,7 @@
 
 from typing import Dict, Iterator, List
 from adapters.base import ModelAdapter
-from adapters.protocol import ChatCompletionRequest, ChatCompletionResponse, ChatMessage
+from adapters.protocol import ChatCompletionRequest, ChatCompletionResponse, ChatMessage, CompletionRequest, CompletionResponse
 import time
 
 import cachetools.func
@@ -68,7 +68,7 @@ class ZhiPuApiModel(ModelAdapter):
         invoke_method = "sse-invoke" if request.stream else "invoke"
         url = f"https://open.bigmodel.cn/api/paas/v3/model-api/{model}/{invoke_method}"
         token = generate_token(self.api_key)
-        params = self.convert_params(request)
+        params = self.convert_params_chat_completions(request)
         if request.stream:
             data = stream(url, {"Authorization": token}, params)
             event_data = SSEClient(data)
@@ -80,9 +80,35 @@ class ZhiPuApiModel(ModelAdapter):
             headers.update({"Authorization": token})
             data = post(url, headers, params)
             logger.debug(f"chat_completions data: {data}")
-            yield ChatCompletionResponse(**self.convert_response(data, model))
+            yield ChatCompletionResponse(**self.convert_response_chat_completions(data, model))
 
-    def convert_response(self, resp, model):
+
+    def completions(self, request: CompletionRequest) -> Iterator[CompletionResponse]:
+        '''
+        https://open.bigmodel.cn/dev/api#http
+        https://open.bigmodel.cn/dev/api#sdk
+        '''
+        # 发起post请求
+        model = self.model if self.model else request.model
+        invoke_method = "sse-invoke" if request.stream else "invoke"
+        url = f"https://open.bigmodel.cn/api/paas/v3/model-api/{model}/{invoke_method}"
+        token = generate_token(self.api_key)
+        params = self.convert_params_completions(request)
+        if request.stream:
+            data = stream(url, {"Authorization": token}, params)
+            event_data = SSEClient(data)
+            for event in event_data.events():
+                logger.debug(f"completions event: {event}")
+                yield CompletionResponse(**self.convert_response_stream(event, model))
+        else:
+            global headers
+            headers.update({"Authorization": token})
+            data = post(url, headers, params)
+            logger.debug(f"completions data: {data}")
+            yield CompletionResponse(**self.convert_response_completions(data, model))
+
+
+    def convert_response_chat_completions(self, resp, model):
         resp = resp["data"]
         req_id = resp["request_id"]
         openai_response = {
@@ -134,8 +160,31 @@ class ZhiPuApiModel(ModelAdapter):
             ],
         }
         return openai_response
+    
+    def convert_response_completions(self, resp, model):
+        resp = resp["data"]
+        req_id = resp["request_id"]
+        openai_response = {
+            "id": f"chatcmpl-{req_id}",
+            "object": "text_completion",
+            "created": int(time.time()),
+            "model": model,
+            "usage": {
+                "prompt_tokens": resp["usage"]["prompt_tokens"],
+                "completion_tokens": resp["usage"]["completion_tokens"],
+                "total_tokens": resp["usage"]["total_tokens"],
+            },
+            "choices": [
+                {
+                    "text": resp["choices"][0]["content"],
+                    "index": 0,
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+        return openai_response
 
-    def convert_params(self, request: ChatCompletionRequest) -> Dict:
+    def convert_params_chat_completions(self, request: ChatCompletionRequest) -> Dict:
         """
         将请求参数转换为 API 请求参数
         """
@@ -152,6 +201,26 @@ class ZhiPuApiModel(ModelAdapter):
                 top_p = 0.7
             params["top_p"] = top_p
         return params
+    
+    def convert_params_completions(self, request: ChatCompletionRequest) -> Dict:
+        """
+        将请求参数转换为 API 请求参数
+        """
+        req_args = request.model_dump(exclude_none=True, exclude_defaults=True)
+        req_args.update(self.config_args)
+        params = {
+            "prompt": [{"role": "user", "content": request.prompt}] if isinstance(request.prompt, str) 
+            else [{"role": "user", "content": p} for p in request.prompt]
+        }
+        if req_args.get("temperature"):
+            params["temperature"] = req_args.get("temperature")
+        if req_args.get("top_p"):
+            top_p = req_args.get("top_p")  # zhipu 范围在(0,1)开区间，默认值0.7
+            if top_p == 1:
+                top_p = 0.7
+            params["top_p"] = top_p
+        return params
+
 
     def convert_messages_to_prompt(self, messages: List[ChatMessage]) -> List[Dict[str, str]]:
         prompt = []
