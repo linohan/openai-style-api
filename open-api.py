@@ -88,7 +88,8 @@ def check_admin_token(
 
 def convert(resp: Iterator[ChatCompletionResponse]):
     for response in resp:
-        yield f"data: {response.model_dump_json(exclude_none=True)}\n\n"
+        # yield f"data: {response.model_dump_json(exclude_none=True)}\n\n"
+        yield f"data: {response.json(exclude_none=True)}\n\n"
     yield "data: [DONE]\n\n"
 
 
@@ -109,7 +110,7 @@ def create_chat_completion(
     else:
         openai_response = next(resp)
         # return JSONResponse(content=openai_response.model_dump(exclude_none=True))
-        return JSONResponse(content=openai_response.dict())
+        return JSONResponse(content=openai_response.dict(exclude_none=True))
     
 
 @router.post("/v1/completions")
@@ -123,7 +124,7 @@ def create_completion(
     else:
         openai_response = next(resp)
         # return JSONResponse(content=openai_response.model_dump(exclude_none=True))
-        return JSONResponse(content=openai_response.dict())
+        return JSONResponse(content=openai_response.dict(exclude_none=True))
 
 
 @router.get("/verify")
