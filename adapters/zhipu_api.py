@@ -188,7 +188,8 @@ class ZhiPuApiModel(ModelAdapter):
         """
         将请求参数转换为 API 请求参数
         """
-        req_args = request.model_dump(exclude_none=True, exclude_defaults=True)
+        # req_args = request.model_dump(exclude_none=True, exclude_defaults=True)
+        req_args = request.dict()
         req_args.update(self.config_args)
         params = {
             "prompt": self.convert_messages_to_prompt(request.messages),

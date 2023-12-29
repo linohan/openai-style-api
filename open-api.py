@@ -108,7 +108,8 @@ def create_chat_completion(
         return StreamingResponse(convert(resp), media_type="text/event-stream")
     else:
         openai_response = next(resp)
-        return JSONResponse(content=openai_response.model_dump(exclude_none=True))
+        # return JSONResponse(content=openai_response.model_dump(exclude_none=True))
+        return JSONResponse(content=openai_response.dict())
     
 
 @router.post("/v1/completions")
@@ -121,7 +122,8 @@ def create_completion(
         return StreamingResponse(convert(resp), media_type="text/event-stream")
     else:
         openai_response = next(resp)
-        return JSONResponse(content=openai_response.model_dump(exclude_none=True))
+        # return JSONResponse(content=openai_response.model_dump(exclude_none=True))
+        return JSONResponse(content=openai_response.dict())
 
 
 @router.get("/verify")
